@@ -5,9 +5,11 @@ import dataloader
 from loss import ContLoss
 from optimizer import create_LARS
 import numpy as np
+import os
+from utils import str2bool
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 parser = argparse.ArgumentParser()
 
@@ -23,7 +25,7 @@ parser.add_argument("-final_layer_epoch", help="How many epochs to tune final la
 parser.add_argument("-opt", help="Choose optimizer",
                     type=str, default='LARS')
 parser.add_argument("-contrastive", help="General or Contrastive",
-                    type=bool, default=True)
+                    type=str2bool, default=True)
 parser.add_argument("-train", help="is train",
                     type=bool, default=True)
 parser.add_argument("-weight_decay", help="Weight Decay value",
@@ -101,7 +103,7 @@ def main():
 
     #Losses
     contrastive_loss = ContLoss(args.batch_size, args.temperature, args.sim_type)
-    regression_loss = torch.nn.CrossEntropyLoss()
+    cross_entropy_loss = torch.nn.CrossEntropyLoss()
 
     #Optimizer
     opt, lr_scheduler = start_opt(args, model)
@@ -113,13 +115,6 @@ def main():
                 for step, (images, labels) in enumerate(data_train):
                     opt.zero_grad()
 
-                    if len(images.shape) == 5:
-                        images = images.permute(1, 0, 2, 3, 4)
-                        if args.contrastive and process == 0:
-                            images = torch.cat([images[0], images[1]])
-                        else:
-                            images = images[0]
-
                     #Loss bug so skip and get in next shuffled batch
                     if images.shape[0] != args.batch_size*2 and args.contrastive and process==0:
                         continue
@@ -129,7 +124,7 @@ def main():
                     if args.contrastive and process == 0:
                         loss = contrastive_loss(z)
                     else:
-                        loss = regression_loss(z, labels.squeeze())
+                        loss = cross_entropy_loss(z, labels.squeeze())
 
                     loss.backward()
                     opt.step()
@@ -142,7 +137,7 @@ def main():
                 if process == 2 and args.contrastive or not args.contrastive:
                     validate(data_val, model, e)
 
-                print("Epoch:, ", e, ", Loss: ", np.mean(losses))
+                print("Epoch: ", e, ", Loss: ", np.mean(losses), '\n')
                 save_model(model, e, args.contrastive)
 
             #If just resnet second stage not needed
@@ -153,6 +148,11 @@ def main():
                 args.epoch = args.final_layer_epoch
                 opt, lr_scheduler = start_opt(args, model)
 
+    else:
+        if not args.load_model:
+            print("Define load model for test")
+        else:
+            validate(data_val, model, e)
 
 def start_opt(args, model):
     # Create Optimizer or Restart for final layer tuning
@@ -173,12 +173,14 @@ def validate(data_val, model, epoch):
     for i, (images, labels) in enumerate(data_val):
         z = model(images)
         inds.append((z.argmax(dim=-1).squeeze() == labels.squeeze()).float())
-    inds = torch.cat(inds).numpy()
+    inds = torch.cat(inds)
     model.train()
-    print("Epoch: ", epoch, ", Acc: ", np.mean(inds))
+    print("Epoch: ", epoch, ", Acc: ", inds.mean().item())
 
 def save_model(model, epoch, mode):
     path = "models/" + str(epoch) + '_' + str(mode) + '.pth'
+    if not os.path.exists("models"):
+      os.mkdir("models")
     torch.save(model.state_dict(), path)
 
 def load_model(model, epoch, mode):

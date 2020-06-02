@@ -15,6 +15,7 @@ class TinyImageNetDataLoader(torch.utils.data.Dataset):
     """
     def __init__(self, num_classes, train, args):
         super(TinyImageNetDataLoader, self).__init__()
+        self.args = args
         self.train = train
         self.mode = None
         self.num_classes = num_classes
@@ -73,7 +74,7 @@ class TinyImageNetDataLoader(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         labels = self.labels_dic[self.labels[idx]]
         labels = torch.Tensor([labels]).long().to(device)
-        if self.train:
+        if self.train and self.args.contrastive:
             images_i = self.transform(self.images[idx]).to(device)
             images_j = self.transform(self.images[idx]).to(device)
             return images_i, images_j, labels
@@ -95,6 +96,7 @@ class CIFAR10DataLoader(CIFAR10):
         if num_classes == -1:
             num_classes = 10
         self.num_classes = num_classes
+        self.args = args
         if train:
             self.data = torchvision.datasets.CIFAR10(
                 root='datasets/', train=True, download=True, transform=None)
@@ -111,7 +113,7 @@ class CIFAR10DataLoader(CIFAR10):
     def __getitem__(self, idx):
         img, label = self.data.__getitem__(idx)
         label = torch.Tensor([label]).long().to(device)
-        if self.train:
+        if self.train and self.args.contrastive:
             img_i = self.transform(img)
             img_j = self.transform(img)
             img = torch.stack([img_i, img_j]).to(device)
@@ -124,12 +126,12 @@ class DataLoader(object):
     """
     Dataset wrapper
     """
-    def __init__(self, dataset, num_classes, transform, train):
+    def __init__(self, dataset, num_classes, args, train):
         self.train = train
         if dataset == 'CIFAR10':
-            self.dataset = CIFAR10DataLoader(num_classes, train, transform)
+            self.dataset = CIFAR10DataLoader(num_classes, train, args)
         elif dataset == 'TinyImageNet':
-            self.dataset = TinyImageNetDataLoader(num_classes, train, transform)
+            self.dataset = TinyImageNetDataLoader(num_classes, train, args)
         self.num_classes = self.dataset.num_classes
 
     def __len__(self):

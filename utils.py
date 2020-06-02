@@ -1,5 +1,11 @@
 import torch.nn as nn
 
+def str2bool(val):
+  if val == "True":
+    return True
+  if val == "False":
+    return False
+
 def normalize(var):
     norm = var.norm(p=2, dim=1, keepdim=True)
     return var.div(norm)
