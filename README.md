@@ -49,11 +49,11 @@ The augmentations used mainly in this paper consist of:
 
 ## Running Code
 The code arguments are setup with defaults in main.py. The main changes would 
-be to the --base_model (resnet to be used), --lr, and --contrastive (to compare 
+be to the -base_model (resnet to be used), -lr, and -contrastive (to compare 
 between original and contrastive network)
 
 To test original resnet accuracy
- > python3 main.py --contrastive False --epoch 50
+ > python3 main.py -contrastive False -epoch 50
 
 And compare to contrastive model
  > python3 main.py
