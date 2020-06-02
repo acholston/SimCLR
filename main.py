@@ -152,6 +152,7 @@ def main():
                 model.convert()
                 args.epoch = args.final_layer_epoch
                 opt, lr_scheduler = start_opt(args, model)
+                args.contrastive = False
 
     else:
         if not args.load_model:
