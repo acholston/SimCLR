@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 
 #General Arguments
 parser.add_argument("-lr", help="Learning Rate",
-                    type=float, default=0.1)
+                    type=float, default=0.001)
 parser.add_argument("-batch_size", help="Batch Size",
                     type=int, default=256)
 parser.add_argument("-epoch", help="Epochs to Train",
@@ -27,11 +27,11 @@ parser.add_argument("-opt", help="Choose optimizer",
 parser.add_argument("-contrastive", help="General or Contrastive",
                     type=str2bool, default=True)
 parser.add_argument("-train", help="is train",
-                    type=bool, default=True)
+                    type=str2bool, default=True)
 parser.add_argument("-weight_decay", help="Weight Decay value",
                     type=float, default=1e-6)
 parser.add_argument("-load_model", help="Load previously trained model",
-                    type=bool, default=False)
+                    type=str2bool, default=False)
 parser.add_argument("-start_epoch", help="Epoch to start and load save file",
                     type=int, default=0)
 
@@ -40,9 +40,9 @@ parser.add_argument("-start_epoch", help="Epoch to start and load save file",
 parser.add_argument("-base_model", help="Resnet model (layers)",
                     type=int, default=18)
 parser.add_argument("-pretrained", help="Load pretrain resnet model",
-                    type=bool, default=True)
+                    type=str2bool, default=True)
 parser.add_argument("-normalize", help="Normalize feature space",
-                    type=bool, default=True)
+                    type=str2bool, default=True)
 parser.add_argument("-projection_size", help="Size of output of encoder projection",
                     type=int, default=512)
 parser.add_argument("-layer_size", help="Size of layers between feature and output",
@@ -115,6 +115,11 @@ def main():
                 for step, (images, labels) in enumerate(data_train):
                     opt.zero_grad()
 
+                    #To adjust for dataloader outputting two images 
+                    if len(images.shape) == 5:
+                        images = images.permute(1, 0, 2, 3, 4)
+                        images = torch.cat([images[0], images[1]])
+                    
                     #Loss bug so skip and get in next shuffled batch
                     if images.shape[0] != args.batch_size*2 and args.contrastive and process==0:
                         continue
