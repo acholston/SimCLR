@@ -1,8 +1,8 @@
-#SimCLR
+# SimCLR
 This is an implementaton of SimCLR from the paper:
 https://arxiv.org/pdf/2002.05709.pdf
 
-##Overview
+## Overview
 
 SimCLR presents a method for unsupervised pretraining of a backbone model, designed 
 to extract features that can that can be detected across image warping.
@@ -23,7 +23,7 @@ The augmentations used mainly in this paper consist of:
  
  ![SimCLR](image.png)
  
- ##Code Components
+ ## Code Components
  
     1. Model
         a. Encoder (uses resnet18 or 50)
@@ -40,14 +40,14 @@ The augmentations used mainly in this paper consist of:
         a. Adam/SGD
         b. LARS (layer-wise tuned for high batch sizes)
         
- ##Setup
+ ## Setup
  
  To get the required setups run
  
  > pip3 install -r requirements.txt
 
 
-##Running Code
+## Running Code
 The code arguments are setup with defaults in main.py. The main changes would 
 be to the --base_model (resnet to be used), --lr, and --contrastive (to compare 
 between original and contrastive network)
